@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  rag-service:
+    build: ./rag-service-python
+    ports:
+      - "8000:8000"
+    environment:
+      - SILICONFLOW_API_KEY=${SILICONFLOW_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+    volumes:
+      - ./rag-service-python/data:/app/data
+      - ./rag-service-python/config:/app/config
+    restart: unless-stopped

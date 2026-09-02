@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 知识库问答</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column}
+header{background:#1e293b;padding:16px 24px;border-bottom:1px solid #334155}
+header h1{font-size:1.25rem;font-weight:600}
+.container{max-width:900px;width:100%;margin:0 auto;padding:24px;flex:1;display:flex;flex-direction:column}
+.search-box{display:flex;gap:12px;margin-bottom:24px}
+.search-box input{flex:1;padding:12px 16px;font-size:1rem;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#e2e8f0;outline:none}
+.search-box input:focus{border-color:#3b82f6}
+.search-box button{padding:12px 24px;font-size:1rem;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:500}
+.search-box button:hover{background:#2563eb}
+.search-box button:disabled{background:#475569;cursor:not-allowed}
+.answer-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin-bottom:16px;display:none}
+.answer-card.show{display:block}
+.answer-card .question{color:#94a3b8;font-size:.875rem;margin-bottom:12px}
+.answer-card .question span{color:#38bdf8}
+.answer-card .content{line-height:1.8;font-size:.9375rem}
+.answer-card .refused{color:#f87171;font-weight:600}
+.answer-card .citations{margin-top:16px;padding-top:12px;border-top:1px solid #334155}
+.answer-card .citations h4{font-size:.8125rem;color:#94a3b8;margin-bottom:8px}
+.answer-card .citation{font-size:.8125rem;color:#64748b;margin-bottom:4px}
+.answer-card .citation code{background:#334155;padding:1px 6px;border-radius:4px;font-size:.75rem;color:#38bdf8}
+.answer-card .meta{font-size:.75rem;color:#475569;margin-top:12px}
+.spinner{display:none;text-align:center;padding:40px}
+.spinner.show{display:block}
+.spinner::after{content:"";display:inline-block;width:32px;height:32px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+footer{text-align:center;padding:16px;color:#475569;font-size:.75rem}
+</style>
+</head>
+<body>
+<header><h1>RAG 知识库问答</h1></header>
+<div class="container">
+  <div class="search-box">
+    <input id="question" type="text" placeholder="输入问题，例如：Dubbo 非幂等接口能不能配 retries=2？" autofocus>
+    <button id="askBtn" onclick="ask()">提问</button>
+  </div>
+  <div id="spinner" class="spinner"></div>
+  <div id="results"></div>
+</div>
+<footer>RAG-Java · Powered by bge-m3 + DeepSeek · Hybrid Search + Rerank + Citation</footer>
+<script>
+async function ask(){
+  const q=document.getElementById('question').value.trim()
+  if(!q) return
+  const btn=document.getElementById('askBtn')
+  btn.disabled=true
+  document.getElementById('spinner').classList.add('show')
+
+  try{
+    const resp=await fetch('/api/v1/answer',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question:q, top_k:8, allow_refusal:true})
+    })
+    const data=await resp.json()
+    render(data)
+  }catch(e){
+    render({refused:true,answer:'请求失败: '+e.message,citations:[],latency_ms:0,question:q})
+  }finally{
+    btn.disabled=false
+    document.getElementById('spinner').classList.remove('show')
+  }
+}
+
+function render(data){
+  const div=document.getElementById('results')
+  const card=document.createElement('div')
+  card.className='answer-card show'
+  card.innerHTML=
+    `<div class="question">Q: <span>${escapeHtml(data.question||'')}</span></div>`+
+    `<div class="content ${data.refused?'refused':''}">${escapeHtml(data.answer||'').replace(/\n/g,'<br>')}</div>`+
+    (data.citations&&data.citations.length?
+      `<div class="citations"><h4>引用来源</h4>${data.citations.map(c=>
+        `<div class="citation"><code>${escapeHtml(c.chunk_id)}</code> ${escapeHtml(c.source_path)} &gt; ${escapeHtml(c.section_path)}</div>`
+      ).join('')}</div>`:'')+
+    `<div class="meta">延迟: ${data.latency_ms||'?'}ms | ${data.refused?'已拒答':'已生成'} | tokens: ${JSON.stringify(data.tokens||{})}</div>`
+  div.prepend(card)
+}
+
+function escapeHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+document.getElementById('question').addEventListener('keydown',e=>{if(e.key==='Enter')ask()})
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+**/target/
+**/__pycache__/
+**/*.pyc
+**/*.class
+prototype-cli/data/
+rag-service-python/data/
+*.log
+.DS_Store
+.idea/
+.vscode/

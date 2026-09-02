@@ -1,0 +1,22 @@
+[
+  {
+    "name": "bff",
+    "root": "/mnt/d/我的文件/学习文档/知识库/bff",
+    "description": "BFF 聚合层、Dubbo 聚合、多协议、安全上下文、链路追踪知识库"
+  },
+  {
+    "name": "dubbo",
+    "root": "/mnt/d/我的文件/学习文档/知识库/dubbo",
+    "description": "Dubbo 服务框架、配置、事务、服务暴露、消息、调度、缓存、异常知识库"
+  },
+  {
+    "name": "ddd",
+    "root": "/mnt/d/个人项目/dddGuide",
+    "description": "DDD 领域驱动设计、聚合根、一致性边界知识库"
+  },
+  {
+    "name": "state-machine",
+    "root": "/mnt/d/测试项目/my-knowledge-projec/tatemachine-knowledge",
+    "description": "COLA、状态机、扩展点、DTO、异常、示例链路知识库"
+  }
+]
